@@ -1,0 +1,455 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Authenticated public health analyst profile and epidemiological denominator settings.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified user email address",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "populationDenominator": {
+          "type": "integer",
+          "description": "District population denominator for rate per 100,000 calculation"
+        },
+        "liveShareId": {
+          "type": "string",
+          "description": "Live executive share channel document ID",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "populationDenominator",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ScreeningDataset": {
+      "title": "Screening Dataset Snapshot",
+      "description": "Imported Excel ACF tuberculosis screening dataset snapshot with summary counts and serialized records.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Dataset title",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "reportDateLabel": {
+          "type": "string",
+          "description": "Report date label in Thai or ISO format",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "comparisonDateLabel": {
+          "type": "string",
+          "description": "Baseline comparison date label",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Source Excel file name",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "totalScreened": {
+          "type": "integer",
+          "description": "Total individuals screened"
+        },
+        "totalSymptomatic": {
+          "type": "integer",
+          "description": "Total symptomatic cases"
+        },
+        "totalAbnormalCxr": {
+          "type": "integer",
+          "description": "Total abnormal CXR cases"
+        },
+        "totalTb": {
+          "type": "integer",
+          "description": "Total confirmed TB cases"
+        },
+        "hospitalCount": {
+          "type": "integer",
+          "description": "Number of reporting healthcare facilities"
+        },
+        "payloadJson": {
+          "type": "string",
+          "description": "Serialized JSON payload of hospital-risk records and daily trends",
+          "minLength": 2,
+          "maxLength": 800000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "reportDateLabel",
+        "comparisonDateLabel",
+        "fileName",
+        "totalScreened",
+        "totalSymptomatic",
+        "totalAbnormalCxr",
+        "totalTb",
+        "hospitalCount",
+        "payloadJson",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SurveillanceAlert": {
+      "title": "Surveillance Change Alert",
+      "description": "Automated epidemiological change or data completeness alert generated from dataset comparison.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "datasetId": {
+          "type": "string",
+          "description": "Associated dataset snapshot ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "warning", "info"],
+          "description": "Alert severity tier",
+          "minLength": 4,
+          "maxLength": 20
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "volume_surge",
+            "tb_cluster",
+            "lab_gap",
+            "data_quality",
+            "target_milestone"
+          ],
+          "description": "Epidemiological alert category",
+          "minLength": 4,
+          "maxLength": 40
+        },
+        "title": {
+          "type": "string",
+          "description": "Alert headline",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed epidemiological observation",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "hospitalName": {
+          "type": "string",
+          "description": "Affected hospital or province scope",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "acknowledged": {
+          "type": "boolean",
+          "description": "Whether the analyst has reviewed and acknowledged the alert"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "datasetId",
+        "severity",
+        "category",
+        "title",
+        "description",
+        "hospitalName",
+        "acknowledged",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AlertThresholdSetting": {
+      "title": "Alert Threshold Configuration",
+      "description": "User-configured thresholds for automated significant-change detection.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "minScreeningDeltaAlert": {
+          "type": "integer",
+          "description": "Minimum single-day screening increase to trigger volume surge alert"
+        },
+        "minTbRatePer1000Alert": {
+          "type": "number",
+          "description": "TB detection rate per 1,000 screened threshold"
+        },
+        "minAbnormalCxrPctAlert": {
+          "type": "number",
+          "description": "Abnormal CXR percentage threshold"
+        },
+        "maxUnconfirmedCxrAlert": {
+          "type": "integer",
+          "description": "Maximum unconfirmed abnormal CXR count before lab gap alert"
+        },
+        "minSymptomRecordPctAlert": {
+          "type": "number",
+          "description": "Minimum symptom recording percentage before data completeness alert"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "minScreeningDeltaAlert",
+        "minTbRatePer1000Alert",
+        "minAbnormalCxrPctAlert",
+        "maxUnconfirmedCxrAlert",
+        "minSymptomRecordPctAlert",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SharedDashboard": {
+      "title": "Live Shared Executive Dashboard Snapshot",
+      "description": "Real-time read-only executive briefing snapshot with aggregated hospital surveillance metrics, FY 2570 KPIs, and Phon Na Kaeo Hospital data (zero PII).",
+      "type": "object",
+      "properties": {
+        "shareId": {
+          "type": "string",
+          "description": "Share channel document ID",
+          "minLength": 8,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Shared briefing title",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "defaultPage": {
+          "type": "string",
+          "enum": [
+            "overview",
+            "hospitals",
+            "phonnakaew",
+            "epidemiology",
+            "targets2570"
+          ],
+          "description": "Default target view when executive opens the live link",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "focusHospitalName": {
+          "type": "string",
+          "description": "Focused hospital name (default Phon Na Kaeo Hospital)",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "isPublicLive": {
+          "type": "boolean",
+          "description": "Whether live viewing by executives via share link is active"
+        },
+        "reportDateLabel": {
+          "type": "string",
+          "description": "Report date label in Thai or ISO format",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "comparisonDateLabel": {
+          "type": "string",
+          "description": "Baseline comparison date label",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Source Excel file name",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "populationDenominator": {
+          "type": "integer",
+          "description": "District population denominator for rate per 100,000 calculation"
+        },
+        "totalScreened": {
+          "type": "integer",
+          "description": "Total individuals screened"
+        },
+        "totalSymptomatic": {
+          "type": "integer",
+          "description": "Total symptomatic cases"
+        },
+        "totalAbnormalCxr": {
+          "type": "integer",
+          "description": "Total abnormal CXR cases"
+        },
+        "totalTb": {
+          "type": "integer",
+          "description": "Total confirmed TB cases"
+        },
+        "hospitalCount": {
+          "type": "integer",
+          "description": "Number of reporting healthcare facilities"
+        },
+        "checkedActionsJson": {
+          "type": "string",
+          "description": "Serialized JSON map of FY 2570 action plan completion checkboxes",
+          "minLength": 2,
+          "maxLength": 10000
+        },
+        "payloadJson": {
+          "type": "string",
+          "description": "Serialized JSON payload of hospital-risk records, trends, and FY 2570 indicators",
+          "minLength": 2,
+          "maxLength": 800000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "shareId",
+        "ownerId",
+        "title",
+        "defaultPage",
+        "focusHospitalName",
+        "isPublicLive",
+        "reportDateLabel",
+        "comparisonDateLabel",
+        "fileName",
+        "populationDenominator",
+        "totalScreened",
+        "totalSymptomatic",
+        "totalAbnormalCxr",
+        "totalTb",
+        "hospitalCount",
+        "checkedActionsJson",
+        "payloadJson",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user profile and epidemiological denominator preferences."
+    },
+    "/users/{userId}/datasets/{datasetId}": {
+      "schema": {
+        "$ref": "#/entities/ScreeningDataset"
+      },
+      "description": "User-owned Excel ACF screening dataset snapshots."
+    },
+    "/users/{userId}/alerts/{alertId}": {
+      "schema": {
+        "$ref": "#/entities/SurveillanceAlert"
+      },
+      "description": "User-owned significant-change surveillance alerts."
+    },
+    "/users/{userId}/alertSettings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/AlertThresholdSetting"
+      },
+      "description": "User-owned alert threshold configurations."
+    },
+    "/sharedDashboards/{shareId}": {
+      "schema": {
+        "$ref": "#/entities/SharedDashboard"
+      },
+      "description": "Real-time shared executive KPI and Phon Na Kaeo Hospital live snapshots."
+    }
+  }
+}

@@ -1,0 +1,290 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitive helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidShareId(id) {
+      return id is string && id.size() >= 8 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity blueprint validators
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'populationDenominator', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'populationDenominator', 'liveShareId', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 254
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120
+        && data.populationDenominator is int && data.populationDenominator >= 100 && data.populationDenominator <= 10000000
+        && (!('liveShareId' in data) || isValidShareId(data.liveShareId))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidScreeningDataset(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'reportDateLabel', 'comparisonDateLabel', 'fileName',
+          'totalScreened', 'totalSymptomatic', 'totalAbnormalCxr', 'totalTb',
+          'hospitalCount', 'payloadJson', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'name', 'reportDateLabel', 'comparisonDateLabel', 'fileName',
+          'totalScreened', 'totalSymptomatic', 'totalAbnormalCxr', 'totalTb',
+          'hospitalCount', 'payloadJson', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 160
+        && data.reportDateLabel is string && data.reportDateLabel.size() >= 1 && data.reportDateLabel.size() <= 80
+        && data.comparisonDateLabel is string && data.comparisonDateLabel.size() >= 1 && data.comparisonDateLabel.size() <= 80
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 200
+        && data.totalScreened is int && data.totalScreened >= 0 && data.totalScreened <= 10000000
+        && data.totalSymptomatic is int && data.totalSymptomatic >= 0 && data.totalSymptomatic <= 10000000
+        && data.totalAbnormalCxr is int && data.totalAbnormalCxr >= 0 && data.totalAbnormalCxr <= 10000000
+        && data.totalTb is int && data.totalTb >= 0 && data.totalTb <= 1000000
+        && data.hospitalCount is int && data.hospitalCount >= 1 && data.hospitalCount <= 1000
+        && data.payloadJson is string && data.payloadJson.size() >= 2 && data.payloadJson.size() <= 800000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSurveillanceAlert(data) {
+      return data.keys().hasAll([
+          'ownerId', 'datasetId', 'severity', 'category', 'title',
+          'description', 'hospitalName', 'acknowledged', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'datasetId', 'severity', 'category', 'title',
+          'description', 'hospitalName', 'acknowledged', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && isValidId(data.datasetId)
+        && data.severity is string && data.severity.size() >= 4 && data.severity.size() <= 20
+        && data.severity in ['critical', 'warning', 'info']
+        && data.category is string && data.category.size() >= 4 && data.category.size() <= 40
+        && data.category in ['volume_surge', 'tb_cluster', 'lab_gap', 'data_quality', 'target_milestone']
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 600
+        && data.hospitalName is string && data.hospitalName.size() >= 1 && data.hospitalName.size() <= 120
+        && data.acknowledged is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAlertThresholdSetting(data) {
+      return data.keys().hasAll([
+          'ownerId', 'minScreeningDeltaAlert', 'minTbRatePer1000Alert',
+          'minAbnormalCxrPctAlert', 'maxUnconfirmedCxrAlert',
+          'minSymptomRecordPctAlert', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId', 'minScreeningDeltaAlert', 'minTbRatePer1000Alert',
+          'minAbnormalCxrPctAlert', 'maxUnconfirmedCxrAlert',
+          'minSymptomRecordPctAlert', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.minScreeningDeltaAlert is int && data.minScreeningDeltaAlert >= 1 && data.minScreeningDeltaAlert <= 100000
+        && (data.minTbRatePer1000Alert is int || data.minTbRatePer1000Alert is float)
+        && data.minTbRatePer1000Alert >= 0 && data.minTbRatePer1000Alert <= 1000
+        && (data.minAbnormalCxrPctAlert is int || data.minAbnormalCxrPctAlert is float)
+        && data.minAbnormalCxrPctAlert >= 0 && data.minAbnormalCxrPctAlert <= 100
+        && data.maxUnconfirmedCxrAlert is int && data.maxUnconfirmedCxrAlert >= 1 && data.maxUnconfirmedCxrAlert <= 100000
+        && (data.minSymptomRecordPctAlert is int || data.minSymptomRecordPctAlert is float)
+        && data.minSymptomRecordPctAlert >= 0 && data.minSymptomRecordPctAlert <= 100
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSharedDashboard(data) {
+      return data.keys().hasAll([
+          'shareId', 'ownerId', 'title', 'defaultPage', 'focusHospitalName',
+          'isPublicLive', 'reportDateLabel', 'comparisonDateLabel', 'fileName',
+          'populationDenominator', 'totalScreened', 'totalSymptomatic',
+          'totalAbnormalCxr', 'totalTb', 'hospitalCount',
+          'checkedActionsJson', 'payloadJson', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'shareId', 'ownerId', 'title', 'defaultPage', 'focusHospitalName',
+          'isPublicLive', 'reportDateLabel', 'comparisonDateLabel', 'fileName',
+          'populationDenominator', 'totalScreened', 'totalSymptomatic',
+          'totalAbnormalCxr', 'totalTb', 'hospitalCount',
+          'checkedActionsJson', 'payloadJson', 'createdAt', 'updatedAt'
+        ])
+        && isValidShareId(data.shareId)
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.defaultPage is string && data.defaultPage.size() >= 4 && data.defaultPage.size() <= 32
+        && data.defaultPage in ['overview', 'hospitals', 'phonnakaew', 'epidemiology', 'targets2570']
+        && data.focusHospitalName is string && data.focusHospitalName.size() >= 1 && data.focusHospitalName.size() <= 120
+        && data.isPublicLive is bool
+        && data.reportDateLabel is string && data.reportDateLabel.size() >= 1 && data.reportDateLabel.size() <= 80
+        && data.comparisonDateLabel is string && data.comparisonDateLabel.size() >= 1 && data.comparisonDateLabel.size() <= 80
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 200
+        && data.populationDenominator is int && data.populationDenominator >= 100 && data.populationDenominator <= 10000000
+        && data.totalScreened is int && data.totalScreened >= 0 && data.totalScreened <= 10000000
+        && data.totalSymptomatic is int && data.totalSymptomatic >= 0 && data.totalSymptomatic <= 10000000
+        && data.totalAbnormalCxr is int && data.totalAbnormalCxr >= 0 && data.totalAbnormalCxr <= 10000000
+        && data.totalTb is int && data.totalTb >= 0 && data.totalTb <= 1000000
+        && data.hospitalCount is int && data.hospitalCount >= 1 && data.hospitalCount <= 1000
+        && data.checkedActionsJson is string && data.checkedActionsJson.size() >= 2 && data.checkedActionsJson.size() <= 10000
+        && data.payloadJson is string && data.payloadJson.size() >= 2 && data.payloadJson.size() <= 800000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow create: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'populationDenominator', 'liveShareId', 'updatedAt']);
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      match /datasets/{datasetId} {
+        allow get: if isValidId(userId) && isValidId(datasetId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(datasetId)
+          && isOwner(userId)
+          && isValidScreeningDataset(incoming())
+          && incoming().ownerId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(datasetId)
+          && isOwner(userId)
+          && isValidScreeningDataset(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'reportDateLabel', 'comparisonDateLabel', 'fileName',
+            'totalScreened', 'totalSymptomatic', 'totalAbnormalCxr', 'totalTb',
+            'hospitalCount', 'payloadJson', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(datasetId) && isOwner(userId);
+      }
+
+      match /alerts/{alertId} {
+        allow get: if isValidId(userId) && isValidId(alertId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(alertId)
+          && isOwner(userId)
+          && isValidSurveillanceAlert(incoming())
+          && incoming().ownerId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(alertId)
+          && isOwner(userId)
+          && isValidSurveillanceAlert(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().datasetId == existing().datasetId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['acknowledged', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(alertId) && isOwner(userId);
+      }
+
+      match /alertSettings/{settingId} {
+        allow get: if isValidId(userId) && isValidId(settingId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId)
+          && isValidId(settingId)
+          && isOwner(userId)
+          && isValidAlertThresholdSetting(incoming())
+          && incoming().ownerId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId)
+          && isValidId(settingId)
+          && isOwner(userId)
+          && isValidAlertThresholdSetting(incoming())
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'minScreeningDeltaAlert', 'minTbRatePer1000Alert',
+            'minAbnormalCxrPctAlert', 'maxUnconfirmedCxrAlert',
+            'minSymptomRecordPctAlert', 'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(settingId) && isOwner(userId);
+      }
+    }
+
+    // Live Shared Executive Dashboards (Zero PII; capability-token single-document get when isPublicLive == true)
+    match /sharedDashboards/{shareId} {
+      allow get: if isValidShareId(shareId)
+        && (
+          (resource == null && isSignedIn())
+          || (resource != null && (existing().isPublicLive == true || isOwner(existing().ownerId)))
+        );
+      allow list: if isVerified() && existing().ownerId == request.auth.uid;
+      allow create: if isValidShareId(shareId)
+        && isVerified()
+        && isValidSharedDashboard(incoming())
+        && incoming().shareId == shareId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidShareId(shareId)
+        && isVerified()
+        && isOwner(existing().ownerId)
+        && isValidSharedDashboard(incoming())
+        && incoming().shareId == existing().shareId
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'defaultPage', 'focusHospitalName', 'isPublicLive',
+          'reportDateLabel', 'comparisonDateLabel', 'fileName',
+          'populationDenominator', 'totalScreened', 'totalSymptomatic',
+          'totalAbnormalCxr', 'totalTb', 'hospitalCount',
+          'checkedActionsJson', 'payloadJson', 'updatedAt'
+        ]);
+      allow delete: if isValidShareId(shareId) && isOwner(existing().ownerId);
+    }
+  }
+}

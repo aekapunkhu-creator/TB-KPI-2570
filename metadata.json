@@ -1,0 +1,6 @@
+{
+  "name": "ระบบรายงานผลคัดกรองวัณโรค จ.สกลนคร (ExportACF)",
+  "description": "ระบบนำเข้าไฟล์ Excel รายงานผลการคัดกรองวัณโรคเชิงรุก (ExportACF) จ.สกลนคร เขต 08 พร้อมวิเคราะห์เชิงระบาดวิทยา ตัวชี้วัดปีงบประมาณ 2570 แจ้งเตือนการเปลี่ยนแปลงอัตโนมัติ และส่งออก PDF",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
